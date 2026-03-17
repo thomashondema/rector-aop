@@ -29,45 +29,48 @@ class InsertPointcutOnMethod extends AbstractRector
             return null;
         }
 
-        $shimMethod = clone $node;
-
-        $pointcutName = $methodName . 'Pointcut';
-        $node->name = new Identifier($pointcutName);
+        $originalStatements = $node->stmts;
 
         $arguments = [];
-        foreach ($shimMethod->params as $param) {
+        $closureUses = [];
+        foreach ($node->params as $param) {
             if (! $param->var instanceof Node\Expr\Variable) {
                 continue;
             }
 
             $arguments[] = new Node\Arg($param->var, false, $param->variadic);
+            $closureUses[] = new Node\Expr\ClosureUse($param->var, $param->byRef);
         }
 
-        $isVoid = $shimMethod->returnType instanceof Identifier
-            && strtolower($shimMethod->returnType->toString()) === 'void';
+        $isVoid = $node->returnType instanceof Identifier
+            && strtolower($node->returnType->toString()) === 'void';
 
-        $shimMethod->stmts = [];
+        $node->stmts = [];
 
-        $shimMethod = $this->before($shimMethod, $arguments);
+        $node = $this->before($node, $arguments);
 
-        $call = $shimMethod->isStatic()
-            ? new Node\Expr\StaticCall(new Node\Name('self'), $pointcutName, $arguments)
-            : new Node\Expr\MethodCall(new Node\Expr\Variable('this'), $pointcutName, $arguments);
+        $closure = new Node\Expr\Closure([
+            'static' => $node->isStatic(),
+            'uses' => $closureUses,
+            'stmts' => $originalStatements,
+        ]);
+
+        $call = new Node\Expr\FuncCall($closure);
 
         if (! $isVoid) {
             $resultVariable = new Node\Expr\Variable('result');
             $call = new Node\Expr\Assign($resultVariable, $call);
         }
 
-        $shimMethod = $this->around($shimMethod, $arguments, $call, $isVoid ? null : $resultVariable);
+        $node = $this->around($node, $arguments, $call, $isVoid ? null : $resultVariable);
 
-        $shimMethod = $this->after($shimMethod, $isVoid ? null : $resultVariable);
+        $node = $this->after($node, $isVoid ? null : $resultVariable);
 
         if (! $isVoid) {
-            $shimMethod->stmts[] = new Node\Stmt\Return_($resultVariable);
+            $node->stmts[] = new Node\Stmt\Return_($resultVariable);
         }
 
-        return [$shimMethod, $node];
+        return $node;
     }
 
     /**
