@@ -32,14 +32,14 @@ class InsertPointcutOnMethod extends AbstractRector
         $originalStatements = $node->stmts;
 
         $arguments = [];
-        $closureUses = [];
+        $closureParams = [];
         foreach ($node->params as $param) {
             if (! $param->var instanceof Node\Expr\Variable) {
                 continue;
             }
 
             $arguments[] = new Node\Arg($param->var, false, $param->variadic);
-            $closureUses[] = new Node\Expr\ClosureUse($param->var, $param->byRef);
+            $closureParams[] = clone $param;
         }
 
         $isVoid = $node->returnType instanceof Identifier
@@ -51,11 +51,11 @@ class InsertPointcutOnMethod extends AbstractRector
 
         $closure = new Node\Expr\Closure([
             'static' => $node->isStatic(),
-            'uses' => $closureUses,
+            'params' => $closureParams,
             'stmts' => $originalStatements,
         ]);
 
-        $call = new Node\Expr\FuncCall($closure);
+        $call = new Node\Expr\FuncCall($closure, $arguments);
 
         if (! $isVoid) {
             $resultVariable = new Node\Expr\Variable('result');
