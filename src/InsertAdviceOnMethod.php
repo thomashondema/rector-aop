@@ -6,10 +6,13 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\ClassMethod;
+use Rector\Contract\Rector\ConfigurableRectorInterface;
 use Rector\Rector\AbstractRector;
 
-class InsertPointcutOnMethod extends AbstractRector
+class InsertAdviceOnMethod extends AbstractRector implements ConfigurableRectorInterface
 {
+    protected array $configuration = [];
+
     public function getNodeTypes(): array
     {
         return [ClassMethod::class];
@@ -17,6 +20,10 @@ class InsertPointcutOnMethod extends AbstractRector
 
     public function refactor(Node $node)
     {
+        if (! $this->isTargetedPath()) {
+            return null;
+        }
+
         if (! $node instanceof ClassMethod) {
             return null;
         }
@@ -95,5 +102,27 @@ class InsertPointcutOnMethod extends AbstractRector
     protected function after(ClassMethod $method, ?Expr\Variable $resultVariable): ClassMethod
     {
         return $method;
+    }
+
+    public function configure(array $configuration): void
+    {
+        $this->configuration = $configuration;
+    }
+
+    public function isTargetedPath(): bool
+    {
+        var_dump($this->file->getFilePath());
+        if (! isset($this->configuration['paths'])) {
+            return true;
+        }
+        $currentFilePath = $this->file->getFilePath();
+        foreach ($this->configuration['paths'] as $path) {
+            var_dump($path);
+            if (str_starts_with($currentFilePath, $path)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
