@@ -7,9 +7,10 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\ClassMethod;
 use Rector\Contract\Rector\ConfigurableRectorInterface;
-use Rector\Rector\AbstractRector;
+use RectorAop\Pointcut\AbstractPointcutRector;
+use RectorAop\Pointcut\Pointcut;
 
-class InsertAdviceOnMethod extends AbstractRector implements ConfigurableRectorInterface
+class InsertAdviceOnMethod extends AbstractPointcutRector implements ConfigurableRectorInterface
 {
     protected array $configuration = [];
 
@@ -21,6 +22,10 @@ class InsertAdviceOnMethod extends AbstractRector implements ConfigurableRectorI
     public function refactor(Node $node)
     {
         if (! $this->isTargetedPath()) {
+            return null;
+        }
+
+        if (! $this->matchesPointcut($node)) {
             return null;
         }
 
@@ -111,18 +116,24 @@ class InsertAdviceOnMethod extends AbstractRector implements ConfigurableRectorI
 
     public function isTargetedPath(): bool
     {
-        var_dump($this->file->getFilePath());
         if (! isset($this->configuration['paths'])) {
             return true;
         }
         $currentFilePath = $this->file->getFilePath();
         foreach ($this->configuration['paths'] as $path) {
-            var_dump($path);
             if (str_starts_with($currentFilePath, $path)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    protected function pointcut(): Pointcut
+    {
+        if (! isset($this->configuration['paths'])) {
+            return new TruePointcut;
+        }
+        return new AndPointcut($this->configuration['pointcuts']);
     }
 }
