@@ -1,0 +1,17 @@
+services:
+    app:
+        volumes:
+            - app_build:/app
+        working_dir: '/app/'
+        depends_on:
+            - rector-aop
+    rector-aop:
+        build:
+            context: ./
+            dockerfile: vendor/thomashondema/rector-aop/docker/Dockerfile
+        command: [ "sh", "-c", "/app_src/vendor/thomashondema/rector-aop/docker/entrypoint.sh" ]
+        volumes:
+            - ./:/app_src:ro
+            - app_build:/app
+volumes:
+    app_build:
