@@ -13,9 +13,9 @@ use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Expression;
-use RectorAop\InsertPointcutOnMethod;
+use RectorAop\InsertAdviceOnMethod;
 
-class InsertLogsAroundMethod extends InsertPointcutOnMethod
+class InsertLogsAroundMethod extends InsertAdviceOnMethod
 {
     /**
      * @param  ClassMethod  $method
