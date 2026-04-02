@@ -15,10 +15,6 @@ class WithinNamespacePointcut implements Pointcut
     {
         $subject = $context->className ?? $context->namespace ?? '';
 
-        echo "$subject \n";
-        dump($this->pattern);
-        die();
-
         return fnmatch(str_replace('\\', '\\', $this->pattern), $subject);
     }
 }
