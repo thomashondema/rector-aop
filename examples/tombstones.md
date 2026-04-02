@@ -6,6 +6,30 @@ After several iterations, the remaining tombstones highlight code that was never
 In this example rule, `file_put_contents` is used to record method calls.
 On subsequent runs, we merge the results from previous iterations with the latest output so tombstones are not added for methods we already know are active.
 After a few iterations, only code that has never been reached will receive a tombstone and can be treated as a candidate for removal.
+
+```mermaid
+flowchart TD
+    A[Start: initial tombstone file is empty] --> B[Run Rector with broad method coverage]
+    B --> C[Deploy and run the code]
+    C --> D[Observe real production usage]
+    D --> E[Collect methods that were actually called]
+    E --> F[Append newly observed methods to tombstone file]
+    F --> G[Run Rector again with updated tombstones]
+    G --> H{Any new methods still being called?}
+
+    H -- Yes --> C
+    H -- No --> I[Final pass: inspect leftover tombstones]
+
+    subgraph Iterative tombstone loop
+      C
+      D
+      E
+      F
+      G
+      H
+    end
+```
+
 ```PHP
 <?php
 
@@ -92,25 +116,4 @@ return RectorConfig::configure()
         'pointcuts' => $tombstones,
     ]);
 ```
-```mermaid
-flowchart TD
-    A[Start: initial tombstone file is empty] --> B[Run Rector with broad method coverage]
-    B --> C[Deploy and run the code]
-    C --> D[Observe real production usage]
-    D --> E[Collect methods that were actually called]
-    E --> F[Append newly observed methods to tombstone file]
-    F --> G[Run Rector again with updated tombstones]
-    G --> H{Any new methods still being called?}
 
-    H -- Yes --> C
-    H -- No --> I[Final pass: inspect leftover tombstones]
-
-    subgraph Iterative tombstone loop
-      C
-      D
-      E
-      F
-      G
-      H
-    end
-```
