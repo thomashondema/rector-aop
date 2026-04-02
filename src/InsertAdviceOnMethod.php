@@ -8,11 +8,15 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\ClassMethod;
 use Rector\Contract\Rector\ConfigurableRectorInterface;
 use RectorAop\Pointcut\AbstractPointcutRector;
-use RectorAop\Pointcut\Pointcut;
+use RectorAop\Pointcut\CanConfigurePointcuts;
+
 
 class InsertAdviceOnMethod extends AbstractPointcutRector implements ConfigurableRectorInterface
 {
     protected array $configuration = [];
+
+    use CanConfigurePointcuts;
+    use hasArrayConfiguration;
 
     public function getNodeTypes(): array
     {
@@ -109,10 +113,7 @@ class InsertAdviceOnMethod extends AbstractPointcutRector implements Configurabl
         return $method;
     }
 
-    public function configure(array $configuration): void
-    {
-        $this->configuration = $configuration;
-    }
+
 
     public function isTargetedPath(): bool
     {
@@ -127,13 +128,5 @@ class InsertAdviceOnMethod extends AbstractPointcutRector implements Configurabl
         }
 
         return false;
-    }
-
-    protected function pointcut(): Pointcut
-    {
-        if (! isset($this->configuration['paths'])) {
-            return new TruePointcut;
-        }
-        return new AndPointcut($this->configuration['pointcuts']);
     }
 }
