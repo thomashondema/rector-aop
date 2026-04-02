@@ -1,6 +1,7 @@
 services:
     app:
         volumes:
+            - ./:/app_src
             - app_build:/app
         working_dir: '/app/'
         depends_on:
@@ -11,7 +12,10 @@ services:
             dockerfile: vendor/thomashondema/rector-aop/docker/Dockerfile
         command: [ "sh", "-c", "/app_src/vendor/thomashondema/rector-aop/docker/entrypoint.sh" ]
         volumes:
-            - ./:/app_src:ro
+            - ./:/app_src
             - app_build:/app
+        environment:
+            # Change this to the source directory that should be copied instead of symlinked
+            SOURCE_DIR: /app
 volumes:
     app_build:
